@@ -1,0 +1,131 @@
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Parent = screenGui
+mainFrame.Size = UDim2.new(0, 300, 0, 400)
+mainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Draggable = true
+mainFrame.Active = true
+
+local titleBar = Instance.new("TextLabel")
+titleBar.Parent = mainFrame
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.Text = "Mnlk Hub"
+titleBar.TextColor3 = Color3.new(1, 0, 0)
+titleBar.Font = Enum.Font.SourceSansBold
+titleBar.TextSize = 18
+titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Parent = mainFrame
+scrollFrame.Size = UDim2.new(1, -10, 1, -40)
+scrollFrame.Position = UDim2.new(0, 5, 0, 35)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 5, 0)
+scrollFrame.ScrollBarThickness = 10
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local currentHighlight = nil
+local selectedLabel = nil
+
+local function removeHighlight()
+	if currentHighlight then
+		currentHighlight:Destroy()
+	end
+end
+
+local function deselectLabel()
+	if selectedLabel then
+		selectedLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	end
+end
+
+local function createHierarchyEntry(parent, container, indent)
+	local sectionLabel = Instance.new("TextLabel")
+	sectionLabel.Size = UDim2.new(1, 0, 0, 25)
+	sectionLabel.Text = parent.Name
+	sectionLabel.TextColor3 = Color3.new(1, 1, 1)
+	sectionLabel.Font = Enum.Font.SourceSansBold
+	sectionLabel.TextSize = 16
+	sectionLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	sectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+	sectionLabel.Parent = container
+
+	local yOffset = 25
+
+	for _, child in pairs(parent:GetChildren()) do
+		local entryFrame = Instance.new("Frame")
+		entryFrame.Parent = container
+		entryFrame.Size = UDim2.new(1, -10, 0, 20)
+		entryFrame.Position = UDim2.new(0, indent * 20, 0, yOffset)
+		entryFrame.BackgroundTransparency = 1
+
+		local label = Instance.new("TextButton")
+		label.Parent = entryFrame
+		label.Size = UDim2.new(1, -25, 1, 0)
+		label.Position = UDim2.new(0, 25, 0, 0)
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Font = Enum.Font.SourceSansBold
+		label.TextSize = 14
+		label.BackgroundTransparency = 1
+		label.Text = child.Name .. " <font color='#00eaff'>[" .. child.ClassName .. "]</font>"
+		label.RichText = true
+
+		label.MouseButton1Click:Connect(function()
+			removeHighlight()
+			deselectLabel()
+
+			selectedLabel = label
+			selectedLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 128)
+
+			for _, grandChild in pairs(child:GetChildren()) do
+				if not grandChild:IsA("GuiObject") then
+					local highlightChild = Instance.new("Highlight")
+					highlightChild.Parent = grandChild
+					highlightChild.FillColor = Color3.fromRGB(0, 0, 128)
+					highlightChild.OutlineTransparency = 0.5
+				end
+			end
+		end)
+
+		local classLabel = Instance.new("TextLabel")
+		classLabel.Parent = entryFrame
+		classLabel.Size = UDim2.new(1, -25, 1, 0)
+		classLabel.Position = UDim2.new(0, 85, 0, 0)
+		classLabel.TextColor3 = Color3.fromRGB(0, 234, 255)
+		classLabel.TextXAlignment = Enum.TextXAlignment.Left
+		classLabel.Font = Enum.Font.SourceSans
+		classLabel.TextSize = 12
+		classLabel.BackgroundTransparency = 1
+		classLabel.Text = "[" .. child.ClassName .. "]"
+		classLabel.TextTransparency = 0.77
+
+		local childYPos = yOffset + 20
+		for _, grandChild in pairs(child:GetChildren()) do
+			local childFrame = Instance.new("TextLabel")
+			childFrame.Parent = container
+			childFrame.Size = UDim2.new(1, -10, 0, 20)
+			childFrame.Position = UDim2.new(0, indent * 20 + 20, 0, childYPos)
+			childFrame.BackgroundTransparency = 1
+			childFrame.TextColor3 = Color3.new(1, 1, 1)
+			childFrame.RichText = true
+			childFrame.Text = grandChild.Name .. " <font color='#00eaff'>[" .. grandChild.ClassName .. "]</font>"
+			childYPos = childYPos + 20
+		end
+
+		yOffset = yOffset + 40
+	end
+end
+
+local layout = Instance.new("UIListLayout")
+layout.Parent = scrollFrame
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+createHierarchyEntry(game.Workspace, scrollFrame, 0)
+createHierarchyEntry(game.ReplicatedStorage, scrollFrame, 0)
+
+print("Hiérarchie affichée dans l'UI avec les ClassNames en bleu clair.")
